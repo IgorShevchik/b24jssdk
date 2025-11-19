@@ -12,8 +12,8 @@ services:
           memory: 768M # Minimum memory
     expose:
       - "80"
-#    extra_hosts:
-#      - "b24js.bx-shef.by:172.17.0.1"
+    extra_hosts:
+      - "b24ui.bx-shef.by:172.17.0.1"
     env_file: .env.prod
     environment:
       - NUXT_PUBLIC_APP_URL="https://${VIRTUAL_HOST}"
