@@ -8,8 +8,8 @@ import FormattingIcon from '@bitrix24/b24icons-vue/editor/FormattingIcon'
 import RobotIcon from '@bitrix24/b24icons-vue/outline/RobotIcon'
 import GitHubIcon from '@bitrix24/b24icons-vue/social/GitHubIcon'
 
-const isDev = import.meta.dev
-// const isDev = false
+// const isDev = import.meta.dev
+const isDev = true
 
 export function useSearch() {
   const route = useRoute()

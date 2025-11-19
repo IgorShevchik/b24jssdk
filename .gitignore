@@ -72,6 +72,8 @@ docs/components.d.ts
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
+!.env.prod.example
 /playgrounds/**/.env
 /playgrounds/**/.env.local
 /playgrounds/**/.env.development.local
@@ -98,3 +100,6 @@ coverage
 
 .todo.md
 /@tmp
+
+# Docs
+/b24js-app.tar
