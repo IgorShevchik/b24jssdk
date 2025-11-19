@@ -29,7 +29,7 @@ down-all:
 	docker compose -f docker-compose.server.yml down
 
 logs:
-	docker compose -f docker-compose.prod.yml logs
+	docker compose -f docker-compose.prod.yml --env-file .env.prod logs
 
 logs-nginxproxy:
 	docker compose -f docker-compose.server.yml logs
