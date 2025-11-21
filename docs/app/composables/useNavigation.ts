@@ -67,7 +67,6 @@ const categories = {
     {
       id: 'content',
       title: 'Content',
-      framework: 'nuxt',
       icon: TaskListIcon
     },
     {
@@ -156,50 +155,13 @@ function groupChildrenByCategory(items: ContentNavigationItem[], slug: string): 
          * @memo this path
          */
         path: `/docs/${slug}/`,
-        class: 'framework' in category ? [`${category.framework}-only`] : undefined,
+        class: undefined,
         children: categorized[category.id]
       })
     }
   }
 
   return groups
-}
-
-function resolveNavigationIcon(item: ContentNavigationItem) {
-  return item
-  // let icon = item.icon
-  // if (item.path.startsWith('/docs/components')) {
-  //   icon = 'i-lucide-square-code'
-  // }
-  // if (item.path.startsWith('/docs/composables')) {
-  //   icon = 'i-lucide-square-function'
-  // }
-  // if (item.path.startsWith('/docs/typography')) {
-  //   icon = 'i-lucide-square-pilcrow'
-  // }
-
-  // return {
-  //   ...item,
-  //   icon
-  // }
-}
-
-function filterChildrenByFramework(item: ContentNavigationItem, framework: string): ContentNavigationItem {
-  const filteredChildren = item.children?.filter((child) => {
-    if (child.path.startsWith('/docs/components')) {
-      return true
-    }
-
-    if (child.framework && child.framework !== framework) {
-      return false
-    }
-    return true
-  })?.map(child => filterChildrenByFramework(resolveNavigationIcon(child), framework))
-
-  return {
-    ...item,
-    children: filteredChildren?.length ? filteredChildren : undefined
-  }
 }
 
 function processNavigationItem(item: ContentNavigationItem, parent?: ContentNavigationItem): ContentNavigationItem | ContentNavigationItem[] {
@@ -211,24 +173,18 @@ function processNavigationItem(item: ContentNavigationItem, parent?: ContentNavi
     ...item,
     title: parent?.title ? parent.title : item.title,
     badge: parent?.badge || item.badge,
-    class: [item.framework && `${item.framework}-only`].filter(Boolean),
+    class: undefined,
     // @memo Visibility control
     b24ui: {
-      childItem: [item.framework && `${item.framework}-only`].filter(Boolean).join(' ')
+      childItem: undefined
     },
     children: item.children?.length ? item.children?.flatMap(child => processNavigationItem(child)) : undefined
   }
 }
 
 export const useNavigation = (navigation: Ref<ContentNavigationItem[] | undefined>) => {
-  const { framework } = useFrameworks()
-
   const rootNavigation = computed(() =>
     navigation.value?.[0]?.children?.map(item => processNavigationItem(item)) as ContentNavigationItem[]
-  )
-
-  const navigationByFramework = computed(() =>
-    rootNavigation.value?.map(item => filterChildrenByFramework(item, framework.value))
   )
 
   const navigationByCategory = computed(() => {
@@ -246,7 +202,7 @@ export const useNavigation = (navigation: Ref<ContentNavigationItem[] | undefine
   function findSurround(path: string): [ContentNavigationItem | undefined, ContentNavigationItem | undefined] {
     const pathFormatted = withTrailingSlash(path)
     const flattenNavigation = navigationByCategory.value
-      ?.flatMap(item => filterChildrenByFramework(item, framework.value)?.children) ?? []
+      ?.flatMap(item => item?.children) ?? []
 
     const index = flattenNavigation.findIndex(item => item?.path === pathFormatted)
 
@@ -311,7 +267,6 @@ export const useNavigation = (navigation: Ref<ContentNavigationItem[] | undefine
     rootNavigation,
     navigationByCategory,
     navigationMenuByCategory,
-    navigationByFramework,
     findSurround,
     findBreadcrumb
   }

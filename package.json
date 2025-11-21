@@ -30,23 +30,38 @@
     "package-jssdk-nuxt:build": "pnpm --filter ./packages/jssdk-nuxt build",
     "package-jssdk-nuxt:test": "pnpm --filter ./packages/jssdk-nuxt test",
     "package-jssdk-nuxt:lint": "pnpm --filter ./packages/jssdk-nuxt lint",
-    "package-jssdk-nuxt:typecheck": "pnpm --filter ./packages/jssdk-nuxt typecheck",
+    "package-jssdk-nuxt:typecheck": "pnpm --filter ./packages/jssdk typecheck",
     "playground-nuxt:dev": "nuxt dev playgrounds/nuxt --uiDev",
     "playground-nuxt:prepare": "nuxt prepare playgrounds/nuxt",
     "playground-nuxt:build": "nuxt build playgrounds/nuxt",
     "playground-nuxt:generate": "nuxt generate playgrounds/nuxt",
     "playground-nuxt:preview": "nuxt preview playgrounds/nuxt",
+    "playground-nuxt:typecheck": "nuxt typecheck playgrounds/nuxt",
     "docs:dev": "nuxt dev docs",
     "docs:prepare": "nuxt prepare docs",
     "docs:build": "nuxt build docs",
     "docs:generate": "nuxt generate docs",
     "docs:preview": "nuxt preview docs",
-    "lint": "pnpm run package-jssdk:lint && pnpm run package-jssdk-nuxt:lint && pnpm run docs:lint && pnpm run playground-nuxt:lint",
+    "docs:lint": "pnpm --filter ./docs lint",
+    "docs:typecheck": "pnpm --filter ./docs typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "typecheck": "pnpm run package-jssdk:typecheck && pnpm run package-jssdk-nuxt:typecheck && pnpm run docs:typecheck && pnpm run playground-nuxt:typecheck"
+  },
+  "devDependencies": {
+    "@nuxt/eslint-config": "^1.10.0",
+    "@types/node": "^24.7.0",
+    "dotenv": "^17.2.3",
+    "eslint": "^9.39.1",
+    "vue-tsc": "^3.1.4"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.3"
   },
   "resolutions": {
     "@bitrix24/b24jssdk": "workspace:*",
-    "@bitrix24/b24jssdk-nuxt": "workspace:*"
+    "@bitrix24/b24jssdk-nuxt": "workspace:*",
+    "typescript": "5.8.3"
   },
   "keywords": [
     "bitrix24",
