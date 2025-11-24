@@ -18,6 +18,7 @@ type ComponentAttributes = {
   ':ignore'?: string
   ':hide'?: string
   ':slots'?: string
+  ':slug'?: string
 }
 
 type CodeConfig = {
@@ -30,6 +31,7 @@ type CodeConfig = {
   componentName: string
   slots?: Record<string, string>
   propsCast?: Record<string, unknown>
+  prose?: boolean
 }
 
 type Document = {
@@ -38,6 +40,11 @@ type Document = {
 }
 
 const parseBoolean = (value?: string): boolean => value === 'true'
+
+const b24Docs = {
+  ui: 'https://bitrix24.github.io/b24ui/',
+  jsSdk: 'https://bitrix24.github.io/b24jssdk/'
+}
 
 function getComponentMeta(componentName: string) {
   const pascalCaseName = componentName.charAt(0).toUpperCase() + componentName.slice(1)
@@ -333,7 +340,7 @@ const castMap: Record<string, Cast> = {
 /**
  * @see docs/app/components/content/ComponentCode.vue -> code
  */
-const generateComponentCode = async ({
+const generateComponentCode = ({
   props,
   model,
   external,
@@ -341,16 +348,16 @@ const generateComponentCode = async ({
   hide,
   componentName,
   slots,
-  propsCast
+  propsCast,
+  prose
 }: CodeConfig) => {
   const componentProps = Object.fromEntries(
     Object.entries(props).filter(([key]) => !hide.includes(key))
   )
   const camelName = componentName
   let code = ''
-  const prose = false
 
-  const name = `${props.prose ? 'Prose' : 'B24'}${upperFirst(camelName)}`
+  const name = `${prose ? 'Prose' : 'B24'}${upperFirst(camelName)}`
 
   const { componentMeta } = getComponentMeta(name)
 
@@ -549,29 +556,9 @@ function processLinks(
   for (const node of nodes) {
     if (Array.isArray(node)) {
       if (node[0] === 'a' && node[1] && node[1].href) {
-        const href = node[1].href
-
-        if (href.startsWith('/docs/') && !href.startsWith('http')) {
-          let newHref = href.startsWith('/') ? href.slice(1) : href
-
-          if (newHref.endsWith('/')) {
-            newHref = newHref.slice(0, -1) + '.md'
-          }
-
-          node[1].href = `${baseUrl}/${newHref}`
-        }
+        node[1].href = prepareHref(node[1].href, baseUrl)
       } else if (node[0] === 'tip' && node[1] && node[1].to) {
-        const href = node[1].to
-
-        if (href.startsWith('/docs/') && !href.startsWith('http')) {
-          let newHref = href.startsWith('/') ? href.slice(1) : href
-
-          if (newHref.endsWith('/')) {
-            newHref = newHref.slice(0, -1) + '.md'
-          }
-
-          node[1].to = `${baseUrl}/${newHref}`
-        }
+        node[1].href = prepareHref(node[1].to, baseUrl)
       }
 
       for (let i = 1; i < node.length; i++) {
@@ -583,10 +570,51 @@ function processLinks(
   }
 }
 
+function prepareHref(
+  href: string,
+  baseUrl: string
+): string {
+  if (href.includes('/raw') || href.endsWith('.md')) {
+    return href
+  }
+
+  const processUrlWithAnchor = (url: string, base: string): string => {
+    const [path, anchor] = url.split('#')
+    const processedPath = path!.endsWith('/') ? path!.slice(0, -1) + '.md' : path + '.md'
+    return anchor ? `${base}raw/${processedPath}#${anchor}` : `${base}raw/${processedPath}`
+  }
+
+  if (href.startsWith(b24Docs.ui) && href.includes('/docs/')) {
+    const path = href.replace(b24Docs.ui, '')
+    return processUrlWithAnchor(path, b24Docs.ui)
+  }
+
+  if (href.startsWith(b24Docs.jsSdk) && href.includes('/docs/')) {
+    const path = href.replace(b24Docs.jsSdk, '')
+    return processUrlWithAnchor(path, b24Docs.jsSdk)
+  }
+
+  if (href.startsWith('/docs/') && !href.startsWith('http')) {
+    const [path, anchor] = href.split('#')
+    let newHref = path!.startsWith('/') ? path!.slice(1) : path
+
+    if (newHref!.endsWith('/')) {
+      newHref = newHref!.slice(0, -1) + '.md'
+    } else if (!newHref!.endsWith('.md')) {
+      newHref = newHref + '.md'
+    }
+
+    return anchor ? `${baseUrl}/${newHref}#${anchor}` : `${baseUrl}/${newHref}`
+  }
+
+  return href
+}
+
 export async function transformMDC(event: H3Event, doc: Document): Promise<Document> {
   const componentName = camelCase(doc.title)
 
   const config = useRuntimeConfig()
+  const baseUrl = `${config.public.canonicalUrl}${config.public.baseUrl}/raw`
 
   visitAndReplace(doc, 'component-theme', (node) => {
     const appConfig = {}
@@ -609,21 +637,33 @@ export async function transformMDC(event: H3Event, doc: Document): Promise<Docum
     const ignore = attributes[':ignore'] ? json5.parse(attributes[':ignore']) : []
     const hide = attributes[':hide'] ? json5.parse(attributes[':hide']) : []
     const slots = attributes[':slots'] ? json5.parse(attributes[':slots']) : {}
+    const prose = !!attributes[':prose']
 
-    generateComponentCode({
+    const mdcSpecificName = attributes[':slug']
+
+    const finalComponentName = mdcSpecificName ? camelCase(mdcSpecificName) : componentName
+
+    /**
+     * @memo You need to understand that the code is trying to load a component by the page name, but it is not available for some pages.
+     */
+    if (['icons', 'customize components'].includes(finalComponentName.toLowerCase())) {
+      return
+    }
+
+    const code = generateComponentCode({
       props,
       model,
       external,
       externalTypes,
       ignore,
       hide,
-      componentName,
+      componentName: finalComponentName,
       slots,
-      propsCast
+      propsCast,
+      prose
     })
-      .then((code) => {
-        replaceNodeWithPre(node, 'vue', code)
-      })
+
+    replaceNodeWithPre(node, 'vue', code)
   })
 
   visitAndReplace(doc, 'component-props', (node) => {
@@ -754,6 +794,55 @@ export async function transformMDC(event: H3Event, doc: Document): Promise<Docum
     ]
   })
 
+  visitAndReplace(doc, 'card', (node) => {
+    const prevNode = { ...node }
+
+    node[0] = 'blockquote'
+    node[1] = {}
+
+    const title = typeof prevNode[1].to !== 'undefined'
+      ? `[${prevNode[1]?.title}](${prepareHref(prevNode[1].to, baseUrl)})\n`
+      : `**${prevNode[1]?.title}**\n`
+
+    node[2] = [
+      'p',
+      {},
+      title,
+      [...node[2]]
+    ]
+  })
+
+  visitAndReplace(doc, 'card-group', (node) => {
+    node[0] = 'p'
+    node[1] = {}
+  })
+
+  visitAndReplace(doc, 'accordion-item', (node) => {
+    const prevNode = { ...node }
+
+    node[0] = 'p'
+    node[1] = {}
+
+    const title = `*${prevNode[1]?.label}*\n`
+
+    node[2] = [
+      'p',
+      {},
+      title,
+      [...node[2]]
+    ]
+  })
+
+  visitAndReplace(doc, 'accordion', (node) => {
+    node[0] = 'p'
+    node[1] = {}
+  })
+
+  visitAndReplace(doc, 'code-group', (node) => {
+    node[0] = 'p'
+    node[1] = {}
+  })
+
   const componentsListNodes: any[] = []
   visit(doc.body, (node) => {
     if (Array.isArray(node) && node[0] === 'components-list') {
@@ -780,7 +869,7 @@ export async function transformMDC(event: H3Event, doc: Document): Promise<Docum
     node[2] = links
   }
 
-  processLinks(doc.body.value, `${config.public.canonicalUrl}${config.public.baseUrl}/raw`)
+  processLinks(doc.body.value, baseUrl)
 
   return doc
 }

@@ -12,16 +12,20 @@ const pages = [
   '/docs/getting-started/',
   '/docs/getting-started/installation/vue/',
   '/docs/getting-started/installation/nuxt/',
+  '/docs/getting-started/installation/nodejs/',
+  '/docs/getting-started/installation/umd/',
   '/docs/getting-started/ai/mcp/',
   '/docs/getting-started/ai/llms-txt/',
   // endregion ////
   // region B24Frame ////
   '/docs/frame/',
+  '/docs/frame/entity-list/', // @memo we remove this
+  '/docs/frame/app-page-installation-wizard/', // @memo we remove this
+  // endregion ////
   // region B24OAuth ////
-  // endregion ////
   '/docs/oauth/',
-  // region B24Hook ////
   // endregion ////
+  // region B24Hook ////
   '/docs/hook/'
   // endregion ////
 ]
