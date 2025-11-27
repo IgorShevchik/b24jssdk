@@ -1,7 +1,12 @@
-FROM node:22-alpine
+FROM node:22-bullseye-slim
 LABEL maintainer="B24Sdk <github.com/bitrix24>"
 
-RUN apk add --no-cache openssl
+RUN apt-get update && apt-get install -y \
+    openssl \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 
@@ -18,14 +23,9 @@ COPY docs/.output ./docs/.output/
 # Устанавливаем зависимости для production
 RUN pnpm install --prod --frozen-lockfile
 
-# Создаем не-root пользователя для безопасности
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nuxtuser -u 1001
-
-# Меняем владельца файлов
+RUN groupadd -r -g 1001 nodejs && useradd -r -u 1001 -g nodejs nuxtuser
 RUN chown -R nuxtuser:nodejs /usr/src/app
 
-# Переключаемся на не-root пользователя
 USER nuxtuser
 
 EXPOSE 80
