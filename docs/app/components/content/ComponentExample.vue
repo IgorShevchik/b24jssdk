@@ -3,8 +3,9 @@ import { camelCase } from 'scule'
 import { hash } from 'ohash'
 import { useElementSize } from '@vueuse/core'
 import { get, set } from '#b24ui/utils'
-import { B24Hook, LoggerBrowser } from '@bitrix24/b24jssdk'
-import type { B24Frame } from '@bitrix24/b24jssdk'
+import type { Result } from '@bitrix24/b24jssdk'
+import CloudSyncIcon from '@bitrix24/b24icons-vue/outline/CloudSyncIcon'
+import CloudErrorIcon from '@bitrix24/b24icons-vue/main/CloudErrorIcon'
 
 const props = withDefaults(defineProps<{
   name: string
@@ -81,6 +82,7 @@ const el = ref<HTMLElement | null>(null)
 const { $prettier } = useNuxtApp()
 const { width } = useElementSize(el)
 const config = useRuntimeConfig()
+const toast = useToast()
 
 const camelName = camelCase(props.name)
 
@@ -155,44 +157,59 @@ const urlSearchParams = computed(() => {
   return new URLSearchParams(params).toString()
 })
 
-let $b24: B24Frame | B24Hook | undefined = undefined
-let $b24Type = 'undefined'
+const b24Instance = useB24()
+const userInput = ref('')
+const isLoading = ref(true)
 
-try {
-  const { $initializeB24Frame } = useNuxtApp()
-  $b24 = await $initializeB24Frame()
-  $b24Type = 'B24Frame'
-} catch {
-  $b24 = undefined
-  $b24Type = 'undefined'
-}
-
-if (typeof $b24 === 'undefined') {
-  $b24 = B24Hook.fromWebhookUrl(config.public.b24Hook)
-  $b24Type = 'B24Hook'
-}
-
-if (typeof $b24 === 'undefined') {
-  $b24 = undefined
-  $b24Type = 'undefined'
-  const appError = createError({
-    statusCode: 404,
-    statusMessage: 'B24 not init',
-    data: {
-      description: 'Problem in middleware',
-      homePageIsHide: true,
-      isShowClearError: false
-    },
-    fatal: true
-  })
-
-  showError(appError)
-}
-
-provide('propsWithB24', {
-  logger: LoggerBrowser.build(`JsSdk Docs use ${$b24Type}`, true),
-  b24: $b24
+onMounted(async () => {
+  const result: Result = await b24Instance.init()
+  if (!result.isSuccess) {
+    toast.add({
+      title: 'Error',
+      description: result.getErrorMessages().join('\n'),
+      color: 'air-primary-alert',
+      icon: CloudErrorIcon
+    })
+  }
+  isLoading.value = false
 })
+
+const saveHook = () => {
+  if (
+    !b24Instance.isHookFromEnv()
+    && userInput.value.length > 0
+  ) {
+    // now init b24Hook
+    const result: Result = b24Instance.set(userInput.value)
+    if (!result.isSuccess) {
+      toast.add({
+        title: 'Error',
+        description: result.getErrorMessages().join('\n'),
+        color: 'air-primary-alert',
+        icon: CloudErrorIcon
+      })
+    }
+
+    userInput.value = ''
+  }
+}
+
+const clearHook = async () => {
+  if (!b24Instance.isHookFromEnv()) {
+    // now reset b24Hook
+    const result: Result = b24Instance.set(undefined)
+    if (!result.isSuccess) {
+      toast.add({
+        title: 'Error',
+        description: result.getErrorMessages().join('\n'),
+        color: 'air-primary-alert',
+        icon: CloudErrorIcon
+      })
+    }
+
+    userInput.value = ''
+  }
+}
 </script>
 
 <template>
@@ -201,7 +218,7 @@ provide('propsWithB24', {
       <div
         class="relative"
         :class="[{
-          'border-(--ui-color-design-tinted-na-stroke) border': props.border,
+          'border-(--ui-color-design-tinted-na-stroke) border': props.border || !b24Instance.isInit(),
           'border-b-0 rounded-t-md': props.source,
           'rounded-md': !props.source,
           'overflow-hidden': props.overflowHidden
@@ -239,21 +256,75 @@ provide('propsWithB24', {
             />
           </B24FormField>
         </div>
-
-        <iframe
-          v-if="iframe"
-          v-bind="typeof iframe === 'object' ? iframe : {}"
-          :src="`${config.public.baseUrl}/examples/${name}/?${urlSearchParams}`"
-          class="relative w-full"
-          :class="[props.class, !iframeMobile && 'max-w-[1300px]']"
-        />
-        <div
-          v-else
-          class="flex justify-center p-[16px] bg-grid-example [mask-image:linear-gradient(0deg,rgba(255,255,255,0.09),rgba(255,255,255,0.18))"
-          :class="props.class"
-        >
-          <component :is="camelName" v-bind="{ ...componentProps, ...optionsValues }" />
+        <div v-if="isLoading" class="p-8">
+          <div class="space-y-4">
+            <B24Skeleton class="h-4 w-full" />
+            <B24Skeleton class="h-4 w-full" />
+            <B24Skeleton class="h-4 w-full" />
+            <B24Skeleton class="h-4 w-3/4" />
+          </div>
         </div>
+        <template v-else>
+          <template v-if="!b24Instance.isInit()">
+            <div
+              class="flex justify-center p-[16px] bg-grid-example [mask-image:linear-gradient(0deg,rgba(255,255,255,0.09),rgba(255,255,255,0.18))"
+            >
+              <B24Alert
+                title="Connection to Bitrix24 not established"
+                description="Specify an access hook or open the documentation through the app"
+                color="air-secondary-accent-2"
+                :icon="CloudSyncIcon"
+              >
+                <template #actions>
+                  <B24FieldGroup class="mt-4 w-full lg:max-w-[500px]">
+                    <B24Input
+                      v-model.trim="userInput"
+                      class="w-full"
+                      color="air-primary"
+                      highlight
+                      placeholder="https://some.bitrix24.com/rest/user_id/secret/"
+                      @keydown.enter="saveHook"
+                    />
+
+                    <B24Button
+                      label="Save"
+                      color="air-primary"
+                      :disabled="userInput.length < 10"
+                      @click="saveHook"
+                    />
+                  </B24FieldGroup>
+                </template>
+              </B24Alert>
+            </div>
+          </template>
+          <template v-else>
+            <B24Badge
+              class="z-[2] absolute -top-[11px] right-[11px]"
+              size="sm"
+              :use-close="!b24Instance.isHookFromEnv() && !b24Instance.isFrame()"
+              color="air-selection"
+              :on-close-click="clearHook"
+            >
+              {{ b24Instance.targetOrigin() }}
+            </B24Badge>
+            <iframe
+              v-if="iframe"
+              v-bind="typeof iframe === 'object' ? iframe : {}"
+              :src="`${config.public.baseUrl}/examples/${name}/?${urlSearchParams}`"
+              class="relative w-full"
+              :class="[props.class, !iframeMobile && 'max-w-[1300px]']"
+            />
+            <div
+              v-else
+              class="flex justify-center p-[16px] bg-grid-example [mask-image:linear-gradient(0deg,rgba(255,255,255,0.09),rgba(255,255,255,0.18))"
+              :class="props.class"
+            >
+              <ClientOnly>
+                <component :is="camelName" v-bind="{ ...componentProps, ...optionsValues }" />
+              </ClientOnly>
+            </div>
+          </template>
+        </template>
       </div>
     </template>
 

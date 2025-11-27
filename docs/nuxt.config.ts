@@ -123,8 +123,6 @@ export default defineNuxtConfig({
     public: {
       version: pkg.version,
       siteUrl: prodUrl,
-      // @todo remove this
-      b24Hook: '',
       baseUrl,
       canonicalUrl,
       gitUrl
@@ -159,7 +157,8 @@ export default defineNuxtConfig({
     },
     server: {
       // Fix: "Blocked request. This host is not allowed" when using tunnels like ngrok
-      allowedHosts: [...extraAllowedHosts]
+      allowedHosts: [...extraAllowedHosts],
+      cors: true
     }
   },
 
