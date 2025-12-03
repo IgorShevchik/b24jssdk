@@ -18,8 +18,8 @@ importers:
         version: 5.8.3
     devDependencies:
       '@nuxt/eslint-config':
-        specifier: ^1.10.0
-        version: 1.10.0(@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(@vue/compiler-sfc@3.5.24)(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3)
+        specifier: ^1.11.0
+        version: 1.11.0(@typescript-eslint/utils@8.48.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(@vue/compiler-sfc@3.5.24)(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3)
       '@types/node':
         specifier: ^24.7.0
         version: 24.10.1
@@ -51,32 +51,35 @@ importers:
   docs:
     dependencies:
       '@ai-sdk/deepseek':
-        specifier: ^1.0.29
-        version: 1.0.29(zod@4.1.13)
+        specifier: ^1.0.30
+        version: 1.0.30(zod@4.1.13)
       '@ai-sdk/mcp':
-        specifier: ^0.0.8
-        version: 0.0.8(zod@4.1.13)
+        specifier: ^0.0.11
+        version: 0.0.11(zod@4.1.13)
       '@ai-sdk/vue':
-        specifier: ^2.0.101
-        version: 2.0.101(vue@3.5.24(typescript@5.8.3))(zod@4.1.13)
+        specifier: ^2.0.105
+        version: 2.0.106(vue@3.5.24(typescript@5.8.3))(zod@4.1.13)
       '@bitrix24/b24jssdk-nuxt':
         specifier: workspace:*
         version: link:../packages/jssdk-nuxt
       '@bitrix24/b24ui-nuxt':
-        specifier: ^2.1.8
-        version: 2.1.8(@babel/parser@7.28.5)(@nuxt/content@3.8.2(better-sqlite3@12.4.6)(magicast@0.5.1))(axios@1.13.2)(change-case@5.4.4)(embla-carousel@8.6.0)(joi@18.0.2)(magicast@0.5.1)(sortablejs@1.15.6)(superstruct@2.0.2)(typescript@5.8.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))(vue-router@4.6.3(vue@3.5.24(typescript@5.8.3)))(vue@3.5.24(typescript@5.8.3))(zod@4.1.13)
+        specifier: ^2.1.10
+        version: 2.1.10(@babel/parser@7.28.5)(@nuxt/content@3.8.2(better-sqlite3@12.5.0)(magicast@0.5.1))(axios@1.13.2)(change-case@5.4.4)(embla-carousel@8.6.0)(joi@18.0.2)(magicast@0.5.1)(sortablejs@1.15.6)(superstruct@2.0.2)(typescript@5.8.3)(vite@7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))(vue-router@4.6.3(vue@3.5.24(typescript@5.8.3)))(vue@3.5.24(typescript@5.8.3))(zod@4.1.13)
       '@modelcontextprotocol/sdk':
-        specifier: ^1.22.0
-        version: 1.22.0
+        specifier: ^1.23.0
+        version: 1.24.0(zod@4.1.13)
       '@nuxt/content':
         specifier: ^3.8.2
-        version: 3.8.2(better-sqlite3@12.4.6)(magicast@0.5.1)
+        version: 3.8.2(better-sqlite3@12.5.0)(magicast@0.5.1)
       '@nuxt/image':
         specifier: ^2.0.0
-        version: 2.0.0(db0@0.3.4(better-sqlite3@12.4.6))(ioredis@5.8.2)(magicast@0.5.1)
+        version: 2.0.0(db0@0.3.4(better-sqlite3@12.5.0))(ioredis@5.8.2)(magicast@0.5.1)
       '@nuxt/kit':
         specifier: ^4.2.1
         version: 4.2.1(magicast@0.5.1)
+      '@nuxtjs/mcp-toolkit':
+        specifier: ^0.4.1
+        version: 0.4.1(magicast@0.5.1)(zod@4.1.13)
       '@nuxtjs/plausible':
         specifier: ^2.0.1
         version: 2.0.1(magicast@0.5.1)
@@ -84,20 +87,20 @@ importers:
         specifier: ^22.0.1
         version: 22.0.1
       '@regle/core':
-        specifier: ^1.10.2
-        version: 1.10.2(vue@3.5.24(typescript@5.8.3))
+        specifier: ^1.11.0
+        version: 1.11.0(vue@3.5.24(typescript@5.8.3))
       '@regle/rules':
-        specifier: ^1.10.2
-        version: 1.10.2(vue@3.5.24(typescript@5.8.3))
+        specifier: ^1.11.0
+        version: 1.11.0(vue@3.5.24(typescript@5.8.3))
       '@vueuse/integrations':
-        specifier: ^13.9.0
-        version: 13.9.0(axios@1.13.2)(change-case@5.4.4)(fuse.js@7.1.0)(sortablejs@1.15.6)(vue@3.5.24(typescript@5.8.3))
+        specifier: ^14.1.0
+        version: 14.1.0(axios@1.13.2)(change-case@5.4.4)(fuse.js@7.1.0)(sortablejs@1.15.6)(vue@3.5.24(typescript@5.8.3))
       ai:
-        specifier: ^5.0.101
-        version: 5.0.101(zod@4.1.13)
+        specifier: ^5.0.105
+        version: 5.0.106(zod@4.1.13)
       better-sqlite3:
-        specifier: ^12.4.6
-        version: 12.4.6
+        specifier: ^12.5.0
+        version: 12.5.0
       joi:
         specifier: ^18.0.2
         version: 18.0.2
@@ -1132,8 +1135,13 @@ packages:
       rolldown:
         optional: true
 
-  '@nuxtjs/mdc@0.18.4':
-    resolution: {integrity: sha512-lM4R0Mbbhw5h5Fwj7LqGiw6eanqjjPkzi+9FaXfn1BdmfbW8GlR2quLIiBXTbw0wUrWYyOWoc5FGIE/gpZUTjQ==}
+  '@nuxtjs/mcp-toolkit@0.4.1':
+    resolution: {integrity: sha512-vT4B1ujtoIMkkkJ0WufM5ccZ1A+dfVOqNDrJT4ZT5KExHiogWjq5C1nrm58PI0+Fwo004f5tWxBE2B8Mo17xsA==}
+    peerDependencies:
+      zod: ^4.1.13
+
+  '@nuxtjs/mdc@0.18.3':
+    resolution: {integrity: sha512-Fl64a9OZBH3J7ZpqzSWkrS64oFmLLvledZMcnYH3UzVtgFPo/GaICdJN3Ml83NSs/J9At6HHaP0k3+nrxu2qJw==}
 
   '@nuxtjs/plausible@2.0.1':
     resolution: {integrity: sha512-Edr7oFIeZ9Og2lS21NhC3MRgcR7X9H1Hyjve8EsM2CycJGBlCcGKHs0+vi4KpbCVi33VlTXUUYNRPtGyeUX6Fw==}
@@ -7398,7 +7406,7 @@ snapshots:
   '@nuxt/content@3.8.2(better-sqlite3@12.4.6)(magicast@0.3.5)':
     dependencies:
       '@nuxt/kit': 4.2.1(magicast@0.3.5)
-      '@nuxtjs/mdc': 0.18.4(magicast@0.3.5)
+      '@nuxtjs/mdc': 0.18.3(magicast@0.3.5)
       '@shikijs/langs': 3.15.0
       '@sqlite.org/sqlite-wasm': 3.50.4-build1
       '@standard-schema/spec': 1.0.0
@@ -7459,7 +7467,7 @@ snapshots:
   '@nuxt/content@3.8.2(better-sqlite3@12.4.6)(magicast@0.5.1)':
     dependencies:
       '@nuxt/kit': 4.2.1(magicast@0.5.1)
-      '@nuxtjs/mdc': 0.18.4(magicast@0.5.1)
+      '@nuxtjs/mdc': 0.18.3(magicast@0.5.1)
       '@shikijs/langs': 3.15.0
       '@sqlite.org/sqlite-wasm': 3.50.4-build1
       '@standard-schema/spec': 1.0.0
@@ -8168,7 +8176,25 @@ snapshots:
       - vue-tsc
       - yaml
 
-  '@nuxtjs/mdc@0.18.4(magicast@0.3.5)':
+  '@nuxtjs/mcp-toolkit@0.4.1(magicast@0.5.1)(zod@4.1.13)':
+    dependencies:
+      '@clack/prompts': 0.11.0
+      '@modelcontextprotocol/sdk': 1.24.0(zod@4.1.13)
+      '@nuxt/kit': 4.2.1(magicast@0.5.1)
+      automd: 0.4.2(magicast@0.5.1)
+      chokidar: 4.0.3
+      defu: 6.1.4
+      ms: 2.1.3
+      pathe: 2.0.3
+      scule: 1.3.0
+      tinyglobby: 0.2.15
+      zod: 4.1.13
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - magicast
+      - supports-color
+
+  '@nuxtjs/mdc@0.18.3(magicast@0.3.5)':
     dependencies:
       '@nuxt/kit': 4.2.1(magicast@0.3.5)
       '@shikijs/core': 3.15.0
@@ -8218,7 +8244,7 @@ snapshots:
       - supports-color
     optional: true
 
-  '@nuxtjs/mdc@0.18.4(magicast@0.5.1)':
+  '@nuxtjs/mdc@0.18.3(magicast@0.5.1)':
     dependencies:
       '@nuxt/kit': 4.2.1(magicast@0.5.1)
       '@shikijs/core': 3.15.0
@@ -8565,14 +8591,17 @@ snapshots:
 
   '@poppinss/exception@1.2.2': {}
 
-  '@regle/core@1.10.2(vue@3.5.24(typescript@5.8.3))':
+  '@regle/core@1.11.0(vue@3.5.24(typescript@5.8.3))':
     dependencies:
       '@standard-schema/spec': 1.0.0
+      '@vue/devtools-api': 7.7.9
+      type-fest: 5.2.0
       vue: 3.5.24(typescript@5.8.3)
 
-  '@regle/rules@1.10.2(vue@3.5.24(typescript@5.8.3))':
+  '@regle/rules@1.11.0(vue@3.5.24(typescript@5.8.3))':
     dependencies:
-      '@regle/core': 1.10.2(vue@3.5.24(typescript@5.8.3))
+      '@regle/core': 1.11.0(vue@3.5.24(typescript@5.8.3))
+      type-fest: 5.2.0
     transitivePeerDependencies:
       - pinia
       - vue
@@ -14029,7 +14058,7 @@ snapshots:
   unwasm@0.5.0:
     dependencies:
       exsolve: 1.0.8
-      knitwork: 1.3.0
+      knitwork: 1.2.0
       magic-string: 0.30.21
       mlly: 1.8.0
       pathe: 2.0.3
