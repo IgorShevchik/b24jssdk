@@ -119,7 +119,7 @@ export default defineNuxtConfig({
    */
   runtimeConfig: {
     public: {
-      useAI: false,
+      useAI: true,
       version: pkg.version,
       siteUrl: prodUrl,
       baseUrl,
