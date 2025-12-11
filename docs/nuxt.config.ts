@@ -16,17 +16,31 @@ const pages = [
   '/docs/getting-started/installation/umd/',
   '/docs/getting-started/ai/mcp/',
   '/docs/getting-started/ai/llms-txt/',
+  '/docs/templates/entity-list/', // @memo we remove this
+  '/docs/templates/app-page-installation-wizard/', // @memo we remove this
   // endregion ////
   // region B24Frame ////
   '/docs/frame/',
-  '/docs/frame/entity-list/', // @memo we remove this
-  '/docs/frame/app-page-installation-wizard/', // @memo we remove this
   // endregion ////
   // region B24OAuth ////
   '/docs/oauth/',
   // endregion ////
   // region B24Hook ////
   '/docs/hook/',
+  '/docs/hook/getters/auth/',
+  '/docs/hook/getters/is-init/',
+  '/docs/hook/methods/call-method/',
+  '/docs/hook/methods/call-batch/',
+  '/docs/hook/methods/call-batch-by-chunk/',
+  '/docs/hook/methods/call-list-method/',
+  '/docs/hook/methods/fetch-list-method/',
+  '/docs/hook/methods/get-target-origin/',
+  '/docs/hook/methods/get-target-origin-with-path/',
+  '/docs/hook/methods/set-logger/',
+  '/docs/hook/methods/get-logger/',
+  '/docs/hook/methods/off-client-side-warning/',
+  '/docs/hook/methods/get-http-client/',
+  '/docs/hook/methods/destroy/',
   // endregion ////
   // region Core ////
   '/docs/core/logger-browser/',
@@ -187,6 +201,27 @@ export default defineNuxtConfig({
         contentCollection: 'docs',
         contentFilters: [
           { field: 'path', operator: 'LIKE', value: '/docs/getting-started%' }
+        ]
+      },
+      {
+        title: 'B24Frame',
+        contentCollection: 'docs',
+        contentFilters: [
+          { field: 'path', operator: 'LIKE', value: '/docs/frame/%' }
+        ]
+      },
+      {
+        title: 'B24Hook',
+        contentCollection: 'docs',
+        contentFilters: [
+          { field: 'path', operator: 'LIKE', value: '/docs/hook/%' }
+        ]
+      },
+      {
+        title: 'B24OAuth',
+        contentCollection: 'docs',
+        contentFilters: [
+          { field: 'path', operator: 'LIKE', value: '/docs/oauth/%' }
         ]
       }
     ],
