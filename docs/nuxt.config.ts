@@ -52,12 +52,12 @@ const pages = [
 /**
  * @memo need add for iframe examples
  */
-const pagesFrameExamples = [
-  '/examples/sidebar-layout-example/',
-  '/examples/sidebar-layout-inner-example/',
-  '/examples/banner-example/',
-  '/examples/banner-with-title-example/',
-  '/examples/content-search-example/'
+const pagesFrameExamples: string[] = [
+  // '/examples/sidebar-layout-example/',
+  // '/examples/sidebar-layout-inner-example/',
+  // '/examples/banner-example/',
+  // '/examples/banner-with-title-example/',
+  // '/examples/content-search-example/'
 ]
 
 const pagesService = [
