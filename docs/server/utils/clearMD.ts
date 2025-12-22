@@ -32,11 +32,15 @@ function clearTags(content: string): string {
     .replace(/<accordion[^>]*>/g, '').replace(/<\/accordion>/g, '')
     .replace(/<steps[^>]*>/g, '').replace(/<\/steps>/g, '')
     .replace(/<code-group[^>]*>/g, '').replace(/<\/code-group>/g, '')
+    .replace(/<collapsible[^>]*>/g, '').replace(/<\/collapsible>/g, '')
+    .replace(/<field-group[^>]*>/g, '').replace(/<\/field-group>/g, '')
 
     .replace(/:{2,}card-group[^}]*\}/g, '')
     .replace(/:{2,}accordion/g, '')
     .replace(/:{2,}steps[^}]*\}/g, '')
     .replace(/:{2,}code-group[^}]*\}/g, '')
+    .replace(/:{2,}collapsible/g, '')
+    .replace(/:{2,}field-group/g, '')
 
     .replace(/:{2,}\n/g, '')
 }
@@ -45,6 +49,7 @@ function clearNewLine(content: string): string {
   return content
     .replace(/> \n/g, '')
     .replace(/\n{3,}/g, '\n\n')
+    .replace(/\| -{4,} /g, '| --- ')
 }
 
 function clearLangTsType(content: string): string {
@@ -94,7 +99,6 @@ function convertHtmlTablesToMarkdown(input: string): string {
     }
 
     return markdownRows.join('\n')
-      .replace(/\| -{4,} /g, '| --- ')
   })
 }
 

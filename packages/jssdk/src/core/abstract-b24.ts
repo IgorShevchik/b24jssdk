@@ -81,6 +81,7 @@ export abstract class AbstractB24 implements TypeB24 {
   }
 
   /**
+   * @deprecate: use callFastListMethod()
    * @inheritDoc
    */
   async callListMethod(
@@ -148,52 +149,145 @@ export abstract class AbstractB24 implements TypeB24 {
   /**
    * @inheritDoc
    */
-  async* fetchListMethod(
+  async callFastListMethod<T = unknown>(
     method: string,
-    params: any = {},
+    params: {
+      order?: any
+      filter?: any
+      [key: string]: any
+    } = {},
     idKey: string = 'ID',
     customKeyForResult: null | string = null
-  ): AsyncGenerator<any[]> {
-    params.order = params.order || {}
-    params.filter = params.filter || {}
-    params.start = -1
+  ): Promise<Result<T[]>> {
+    const result: Result<T[]> = new Result()
 
     const moreIdKey = `>${idKey}`
+    const requestParams = {
+      ...params,
+      order: { ...(params.order || {}), [idKey]: 'ASC' },
+      filter: { ...(params.filter || {}), [moreIdKey]: 0 },
+      start: -1
+    }
 
-    params.order[idKey] = 'ASC'
-    params.filter[moreIdKey] = 0
+    let allItems: T[] = []
+    let isContinue = true
 
     do {
-      const result = await this.callMethod(method, params, params.start)
-      let data = undefined
-      if (!Type.isNull(customKeyForResult) && null !== customKeyForResult) {
-        data = result.getData().result[customKeyForResult] as []
+      this.getLogger().log({ method, requestParams })
+      const response: AjaxResult<T> = await this.callMethod<T>(method, requestParams, -1)
+
+      if (!response.isSuccess) {
+        this.getLogger().error(response.getErrorMessages())
+        result.addErrors([...response.getErrors()])
+        isContinue = false
+        break
+      }
+
+      let resultData: T[] = []
+      if (null === customKeyForResult) {
+        resultData = response.getData().result as T[]
       } else {
-        data = result.getData().result as []
+        resultData = response.getData().result[customKeyForResult] as T[]
       }
 
-      if (data.length === 0) {
+      if (resultData.length === 0) {
+        isContinue = false
         break
       }
 
-      yield data
+      allItems = [...allItems, ...resultData]
 
-      if (data.length < AbstractB24.batchSize) {
+      if (resultData.length < AbstractB24.batchSize) {
+        isContinue = false
         break
       }
 
-      const value = data.at(-1)
-      if (value && idKey in value) {
-        params.filter[moreIdKey] = value[idKey]
+      // Update the filter for the next iteration
+      const lastItem = resultData[resultData.length - 1] as Record<string, any>
+      if (
+        lastItem
+        && typeof lastItem[idKey] !== 'undefined'
+      ) {
+        requestParams.filter[moreIdKey] = Number.parseInt(lastItem[idKey])
+      } else {
+        isContinue = false
+        break
       }
-    } while (true)
+    } while (isContinue)
+
+    return result.setData(allItems)
+  }
+
+  /**
+   * @inheritDoc
+   */
+  async* fetchListMethod<T = unknown>(
+    method: string,
+    params: {
+      order?: any
+      filter?: any
+      [key: string]: any
+    } = {},
+    idKey: string = 'ID',
+    customKeyForResult: null | string = null
+  ): AsyncGenerator<T[]> {
+    const moreIdKey = `>${idKey}`
+
+    const requestParams = {
+      ...params,
+      order: { ...(params.order || {}), [idKey]: 'ASC' },
+      filter: { ...(params.filter || {}), [moreIdKey]: 0 },
+      start: -1
+    }
+
+    let isContinue = true
+    do {
+      this.getLogger().log({ method, requestParams })
+      const response: AjaxResult<T> = await this.callMethod<T>(method, requestParams, -1)
+
+      if (!response.isSuccess) {
+        this.getLogger().error(response.getErrorMessages())
+        throw new Error(`API Error: ${response.getErrorMessages().join('; ')}`)
+      }
+
+      let resultData: T[] = []
+      if (null === customKeyForResult) {
+        resultData = response.getData().result as T[]
+      } else {
+        resultData = response.getData().result[customKeyForResult] as T[]
+      }
+
+      if (resultData.length === 0) {
+        isContinue = false
+        break
+      }
+
+      yield resultData
+
+      if (resultData.length < AbstractB24.batchSize) {
+        isContinue = false
+        break
+      }
+
+      // Update the filter for the next iteration
+      const lastItem = resultData[resultData.length - 1] as Record<string, any>
+      if (
+        lastItem
+        && typeof lastItem[idKey] !== 'undefined'
+      ) {
+        requestParams.filter[moreIdKey] = Number.parseInt(lastItem[idKey] as string)
+      } else {
+        isContinue = false
+        break
+      }
+    } while (isContinue)
   }
 
   /**
    * @inheritDoc
    */
   async callBatch(
-    calls: Array<any> | object,
+    calls: Array<any> | Record<string, any>,
     isHaltOnError: boolean = true,
     returnAjaxResult: boolean = false
   ): Promise<Result> {

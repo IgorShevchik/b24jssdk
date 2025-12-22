@@ -21,6 +21,7 @@ import StopLIcon from '@bitrix24/b24icons-vue/outline/StopLIcon'
 const config = useRuntimeConfig()
 const appLocale = useLocale()
 const toast = useToast()
+const { track } = useAnalytics()
 
 const components = {
   pre: ProseStreamPre as unknown as DefineComponent
@@ -36,6 +37,9 @@ watch(pendingMessage, (message) => {
     if (messages.value.length === 0 && chat.messages.length > 0) {
       chat.messages.length = 0
     }
+
+    track('AI Chat Pending Message Sent')
+
     chat.sendMessage({
       text: message
     })
@@ -168,6 +172,8 @@ function handleSubmit(event?: Event) {
     return
   }
 
+  track('AI Chat Message Sent')
+
   chat.sendMessage({
     text: input.value
   })
@@ -178,6 +184,8 @@ function handleSubmit(event?: Event) {
 }
 
 function askQuestion(question: string) {
+  track('AI Chat Question Sent')
+
   chat.sendMessage({
     text: question
   })
@@ -265,10 +273,11 @@ onMounted(() => {
     :use-light-content="false"
     :b24ui="{
       content: 'w-full sm:max-w-2/3',
+      // sidebarLayoutRoot: 'edge-dark',
       sidebarLayoutPageWrapper: 'px-0 ps-0 pe-0 pb-0 lg:px-0 lg:ps-0 lg:pe-0',
       sidebarLayoutContainer: 'gap-0 lg:gap-0 relative',
       header: 'px-[20px] py-[15px] border-b border-(--ui-color-divider-vibrant-default)',
-      body: 'p-0! bg-(--popup-window-background-color) relative'
+      body: 'p-0! relative'
     }"
   >
     <template #header>
@@ -313,7 +322,7 @@ onMounted(() => {
     </template>
 
     <template #body>
-      <div class="absolute flex flex-col inset-y-0 w-full h-full">
+      <div class="absolute flex flex-col inset-y-0 w-full h-full bg-(--ui-color-bg-content-primary)">
         <div class="flex-1 overflow-y-auto sm:p-6 p-0! scrollbar-thin">
           <B24ChatMessages
             v-if="chat.messages.length > 0"
@@ -322,7 +331,7 @@ onMounted(() => {
             :messages="chat.messages"
             :status="chat.status"
             :user="{ b24ui: { content: 'text-sm bg-(--ui-color-design-tinted-na-bg) border-(--ui-color-design-tinted-na-stroke) border-(length:--ui-design-tinted-na-stroke-weight) text-(--ui-color-design-tinted-na-content)' } }"
-            :assistant="{ b24ui: { content: 'ring-0 bg-transparent ps-0 pe-0' } }"
+            :assistant="{ b24ui: { content: 'ring-0 border-0 bg-transparent ps-0 pe-0' } }"
             :b24ui="{ indicator: '*:bg-ai-350' }"
             class="flex-1 px-[20px] py-[20px]"
           >
@@ -382,7 +391,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="flex items-center gap-1.5 p-0! border-t-1 border-t-(--ui-color-divider-less) shadow-top-md">
+        <div class="flex items-center gap-1.5 p-0! base-mode bg-(--ui-color-bg-content-primary) border-t-1 border-t-(--ui-color-divider-less) shadow-top-md">
           <div class="p-3 w-full">
             <div class="relative flex items-end gap-2 bg-(--ui-color-bg-content-secondary) rounded-xs ring-1 ring-ai-250 hover:ring-ai-350 pr-2 pb-2">
               <B24Textarea
@@ -401,7 +410,7 @@ onMounted(() => {
                   :icon="MicrophoneOnIcon"
                   color="air-tertiary-no-accent"
                   size="sm"
-                  class="shrink-0"
+                  class="shrink-0 hidden md:flex"
                   @click="startDictation"
                 />
                 <B24Button
@@ -423,7 +432,7 @@ onMounted(() => {
                 @click="handleSubmit"
               />
             </div>
-            <div class="flex justify-between items-center mt-2 px-1 text-xs text-dimmed">
+            <div class="flex justify-between items-center mt-2 text-xs text-dimmed">
               <span>Chat is cleared on refresh</span>
               <div class="flex items-center gap-1">
                 <span>Line break</span>

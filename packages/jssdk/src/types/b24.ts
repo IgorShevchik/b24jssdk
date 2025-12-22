@@ -45,6 +45,7 @@ export type TypeB24 = {
   ): Promise<AjaxResult<T>>
 
   /**
+   * @deprecate: use callFastListMethod()
    * Calls a REST service list method with the specified parameters
    *
    * @param  {string} method Query method
@@ -61,6 +62,27 @@ export type TypeB24 = {
   ): Promise<Result>
 
   /**
+   * Use for quick data retrieval.
+   * Similar to callListMethod, but does not count the total number
+   *
+   * @param  {string} method Query method
+   * @param  {object} params Request parameters
+   * @param {string} idKey Entity ID field name ('ID' || 'id')
+   * @param {string} customKeyForResult Custom field indicating that the result will be a grouping key
+   * @return {Promise}
+   */
+  callFastListMethod<T = unknown>(
+    method: string,
+    params?: {
+      order?: any
+      filter?: any
+      [key: string]: any
+    },
+    idKey?: string,
+    customKeyForResult?: string | null
+  ): Promise<Result<T[]>>
+
+  /**
    * Calls a REST service list method with the specified parameters and returns a generator object.
    * Implements the fast algorithm described in {@see https://apidocs.bitrix24.com/api-reference/performance/huge-data.html}
    *
@@ -71,17 +93,21 @@ export type TypeB24 = {
    *
    * @return {AsyncGenerator} Generator
    */
-  fetchListMethod(
+  fetchListMethod<T = unknown>(
     method: string,
-    params?: any,
+    params?: {
+      order?: any
+      filter?: any
+      [key: string]: any
+    },
     idKey?: string,
     customKeyForResult?: string | null
-  ): AsyncGenerator<any[]>
+  ): AsyncGenerator<T[]>
 
   /**
    * Calls a batch request with a maximum number of commands of no more than 50
    *
-   * @param  {Array | object} calls Request packet
+   * @param  {Array | Record<string, any>} calls Request packet
    * calls = [[method,params],[method,params]]
    * calls = [{method:method,params:params},[method,params]]
    * calls = {call_id:[method,params],...}
@@ -93,7 +119,7 @@ export type TypeB24 = {
    * @see https://apidocs.bitrix24.com/api-reference/bx24-js-sdk/how-to-call-rest-methods/bx24-call-batch.html
    */
   callBatch(
-    calls: Array<any> | object,
+    calls: Array<any> | Record<string, any>,
     isHaltOnError?: boolean,
     returnAjaxResult?: boolean
   ): Promise<Result>

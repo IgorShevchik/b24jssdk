@@ -16,13 +16,25 @@ const props = withDefaults(defineProps<HeaderProps>(), {
 const { desktopLinks } = useHeader()
 const config = useRuntimeConfig()
 
+const isNeedChangeTarget = ref(false)
 const tgLink = computed(() => {
   return (
-    // eslint-disable-next-line no-undef
-    typeof window !== 'undefined' && window.navigator?.language.includes('ru')
+    isNeedChangeTarget.value && (typeof window !== 'undefined' && window.navigator?.language.includes('ru'))
   )
     ? 'https://t.me/bitrix24apps'
     : 'https://t.me/b24_dev'
+})
+
+const b24DocsLink = computed(() => {
+  return (
+    isNeedChangeTarget.value && (typeof window !== 'undefined' && window.navigator?.language.includes('ru'))
+  )
+    ? 'https://apidocs.bitrix24.ru/'
+    : 'https://apidocs.bitrix24.com/'
+})
+
+onMounted(() => {
+  isNeedChangeTarget.value = true
 })
 </script>
 
@@ -54,7 +66,7 @@ const tgLink = computed(() => {
       <B24Button
         aria-label="Bitrix24 REST API"
         :icon="Bitrix24Icon"
-        to="https://apidocs.bitrix24.com/"
+        :to="b24DocsLink"
         target="_blank"
         size="sm"
       />

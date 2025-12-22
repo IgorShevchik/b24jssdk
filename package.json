@@ -3,7 +3,7 @@
   "description": "Bitrix24 REST API JS SDK",
   "version": "1.0.1",
   "author": "Bitrix",
-  "packageManager": "pnpm@10.24.0",
+  "packageManager": "pnpm@10.26.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bitrix24/b24jssdk.git"
@@ -49,10 +49,10 @@
     "typecheck": "pnpm run package-jssdk:typecheck && pnpm run package-jssdk-nuxt:typecheck && pnpm run docs:typecheck && pnpm run playground-nuxt:typecheck"
   },
   "devDependencies": {
-    "@nuxt/eslint-config": "^1.11.0",
-    "@types/node": "^25.0.0",
+    "@nuxt/eslint-config": "^1.12.1",
+    "@types/node": "^25.0.3",
     "dotenv": "^17.2.3",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "vue-tsc": "^3.1.5"
   },
   "peerDependencies": {
@@ -61,7 +61,8 @@
   "resolutions": {
     "@bitrix24/b24jssdk": "workspace:*",
     "@bitrix24/b24jssdk-nuxt": "workspace:*",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "shiki": "3.18.0"
   },
   "keywords": [
     "bitrix24",
