@@ -1,6 +1,6 @@
+import type { B24FrameQueryParams, LoggerInterface } from '@bitrix24/b24jssdk'
 import { ref } from 'vue'
-import { B24Hook, B24Frame, LoggerBrowser, Result } from '@bitrix24/b24jssdk'
-import type { B24FrameQueryParams } from '@bitrix24/b24jssdk'
+import { B24Hook, B24Frame, LoggerFactory, Result, SdkError } from '@bitrix24/b24jssdk'
 
 const sessionKey = 'b24Hook'
 const isUseB24HookFromEnv = ref(false)
@@ -14,9 +14,11 @@ export const useB24 = () => {
 
   const config = useRuntimeConfig()
 
-  function buildLogger(loggerTitle?: string) {
-    // @memo For Docs use full debug
-    return LoggerBrowser.build(loggerTitle ?? 'JsSdk Docs', true)
+  const b24Config = {}
+
+  // @memo For Docs use full debug
+  function buildLogger(loggerTitle?: string): LoggerInterface {
+    return LoggerFactory.createForBrowserDevelopment(loggerTitle ?? 'JsSdk Docs')
   }
 
   function get() {
@@ -34,13 +36,39 @@ export const useB24 = () => {
         nextTick(() => {
           type.value = 'B24Frame'
         })
+
+        const tmpLogger = LoggerFactory.createForBrowserDevelopment('JsSdk Docs')
+        $b24.setupAuthRefresh({
+          checkInterval: 1_500_000, // 25 min
+          refreshBeforeExpiry: 720_000, // 12 minutes
+          autoStart: true,
+          onEvent: (event, data) => {
+            tmpLogger.notice('The token event', {
+              event,
+              data: data ?? '?'
+            })
+          },
+          onRefresh: (authData) => {
+            tmpLogger.notice('The token has been automatically updated', {
+              authData, // @todo remove this
+              domain: authData.domain,
+              expires: authData.expires,
+              expires_in: authData.expires_in
+            })
+          },
+          onError: (error) => {
+            tmpLogger.warning('Automatic token update error', { error })
+          }
+        }, tmpLogger)
       } else if (
         typeof newValue === 'string'
         && newValue.length > 0
       ) {
         sessionStorage.setItem(sessionKey, newValue)
         try {
-          $b24 = B24Hook.fromWebhookUrl(newValue)
+          $b24 = B24Hook.fromWebhookUrl(newValue, b24Config)
+          // @todo uncomment this
+          // $b24.offClientSideWarning()
           nextTick(() => {
             type.value = 'B24Hook'
           })
@@ -79,12 +107,17 @@ export const useB24 = () => {
       }
 
       if (!queryParams.DOMAIN || !queryParams.APP_SID) {
-        throw new Error('Unable to initialize Bitrix24Frame library!')
+        console.error('[docs] Unable to initialize Bitrix24Frame library!')
+        throw new SdkError({
+          code: 'JSSDK_CLIENT_SIDE_WARNING',
+          description: 'Well done! Now paste this URL into the B24 app settings',
+          status: 500
+        })
       }
 
       // now init b24Frame
       const { $initializeB24Frame } = useNuxtApp()
-      return set(await $initializeB24Frame())
+      return set(await $initializeB24Frame(b24Config))
     } catch {
       // set(undefined)
     }

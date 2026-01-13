@@ -3,8 +3,8 @@ import { AbstractHelper } from './abstract-helper'
 import type { TypeB24 } from '../types/b24'
 import type { Result } from '../core/result'
 import { TypeOption } from '../types/b24-helper'
-import Type from '../tools/type'
-import Text from '../tools/text'
+import { Type } from '../tools/type'
+import { Text } from '../tools/text'
 
 export class OptionsManager extends AbstractHelper {
   protected override _data: Map<string, any>
@@ -82,7 +82,7 @@ export class OptionsManager extends AbstractHelper {
         data = defValue
       }
     } catch (error) {
-      this.getLogger().error(error)
+      this.getLogger().error('Failed JSON parse', { error })
       data = defValue
     }
 
@@ -99,7 +99,7 @@ export class OptionsManager extends AbstractHelper {
     try {
       data = JSON.parse(data)
     } catch (error) {
-      this.getLogger().error(error)
+      this.getLogger().error('Failed JSON parse', { error })
       data = defValue
     }
 
@@ -182,7 +182,7 @@ export class OptionsManager extends AbstractHelper {
 
       return defaultValue
     } catch (error) {
-      this.getLogger().warn(error, data)
+      this.getLogger().error('Failed JSON parse', { error })
     }
 
     return defaultValue

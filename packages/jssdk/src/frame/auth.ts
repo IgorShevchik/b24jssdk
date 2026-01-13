@@ -1,12 +1,8 @@
 import type { AppFrame } from './frame'
 import type { MessageManager } from './message'
+import type { AuthActions, AuthData, RefreshAuthData, MessageInitData } from '../types/auth'
+import type { ApiVersion } from '../types/b24'
 import { MessageCommands } from './message'
-import type {
-  AuthActions,
-  AuthData,
-  RefreshAuthData,
-  MessageInitData
-} from '../types/auth'
 
 /**
  * Authorization Manager
@@ -23,7 +19,10 @@ export class AuthManager implements AuthActions {
   #appFrame: AppFrame
   #messageManager: MessageManager
 
-  constructor(appFrame: AppFrame, messageManager: MessageManager) {
+  constructor(
+    appFrame: AppFrame,
+    messageManager: MessageManager
+  ) {
     this.#appFrame = appFrame
     this.#messageManager = messageManager
   }
@@ -32,7 +31,7 @@ export class AuthManager implements AuthActions {
    * Initializes the data received from the parent window message.
    * @param data
    */
-  initData(data: MessageInitData): AuthManager {
+  public initData(data: MessageInitData): AuthManager {
     if (data.AUTH_ID) {
       this.#accessToken = data.AUTH_ID
       this.#refreshId = data.REFRESH_ID
@@ -49,9 +48,9 @@ export class AuthManager implements AuthActions {
   /**
    * Returns authorization data
    *
-   * @link https://apidocs.bitrix24.com/api-reference/bx24-js-sdk/system-functions/bx24-get-auth.html
+   * @link https://apidocs.bitrix24.com/sdk/bx24-js-sdk/system-functions/bx24-get-auth.html
    */
-  getAuthData(): false | AuthData {
+  public getAuthData(): false | AuthData {
     return this.#authExpires > Date.now()
       ? ({
           access_token: this.#accessToken,
@@ -67,9 +66,9 @@ export class AuthManager implements AuthActions {
   /**
    * Updates authorization data through the parent window
    *
-   * @link https://apidocs.bitrix24.com/api-reference/bx24-js-sdk/system-functions/bx24-refresh-auth.html
+   * @link https://apidocs.bitrix24.com/sdk/bx24-js-sdk/system-functions/bx24-refresh-auth.html
    */
-  async refreshAuth(): Promise<AuthData> {
+  public async refreshAuth(): Promise<AuthData> {
     return this.#messageManager
       .send(MessageCommands.refreshAuth, {})
       .then((data: RefreshAuthData) => {
@@ -81,16 +80,30 @@ export class AuthManager implements AuthActions {
       })
   }
 
-  getUniq(prefix: string): string {
+  public getUniq(prefix: string): string {
     return [prefix, this.#memberId || ''].join('_')
   }
 
   /**
    * Determines whether the current user has administrator rights
    *
-   * @link https://apidocs.bitrix24.com/api-reference/bx24-js-sdk/additional-functions/bx24-is-admin.html
+   * @link https://apidocs.bitrix24.com/sdk/bx24-js-sdk/additional-functions/bx24-is-admin.html
    */
   get isAdmin(): boolean {
     return this.#isAdmin
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public getTargetOrigin(): string {
+    return this.#appFrame.getTargetOrigin()
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public getTargetOriginWithPath(): Map<ApiVersion, string> {
+    return this.#appFrame.getTargetOriginWithPath()
   }
 }

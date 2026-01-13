@@ -1,4 +1,5 @@
-import { LoggerBrowser, LoggerType } from '../logger/browser'
+import type { LoggerInterface } from '../logger'
+import { LoggerFactory } from '../logger'
 import type { TypeB24 } from '../types/b24'
 import { ProfileManager } from './profile-manager'
 import { AppManager } from './app-manager'
@@ -7,25 +8,19 @@ import { LicenseManager } from './license-manager'
 import { CurrencyManager } from './currency-manager'
 import { OptionsManager } from './options-manager'
 import { B24PullClientManager } from '../pullClient'
-import Text from '../tools/text'
+import { Text } from '../tools/text'
 import { LoadDataType, TypeSpecificUrl } from '../types/b24-helper'
-import type {
-  TypeApp,
-  TypeB24Form,
-  TypeEnumAppStatus,
-  TypeLicense,
-  TypePayment,
-  TypeUser
-} from '../types/b24-helper'
+import type { TypeApp, TypeB24Form, TypeEnumAppStatus, TypeLicense, TypePayment, TypeUser } from '../types/b24-helper'
 import type { GenderString } from '../types/common'
 import type { TypePullMessage } from '../types/pull'
+import type { BatchNamedCommandsUniversal } from '../types/http'
+import type { Result } from '../core/result'
 
 /**
  * A universal class that is used to manage the initial application data
  */
 export class B24HelperManager {
   private readonly _b24: TypeB24
-  protected _logger: null | LoggerBrowser = null
   private _isInit: boolean = false
 
   private _profile: ProfileManager | null = null
@@ -42,12 +37,14 @@ export class B24HelperManager {
   private _pullClientUnSubscribe: (() => void)[] = []
   private _pullClientModuleId: string = ''
 
+  protected _logger: LoggerInterface
+
   constructor(b24: TypeB24) {
+    this._logger = LoggerFactory.createNullLogger()
     this._b24 = b24
-    this.setLogger(this._b24.getLogger())
   }
 
-  setLogger(logger: LoggerBrowser): void {
+  setLogger(logger: LoggerInterface): void {
     this._logger = logger
     if (null !== this._profile) {
       this._profile.setLogger(this.getLogger())
@@ -78,19 +75,7 @@ export class B24HelperManager {
     }
   }
 
-  getLogger(): LoggerBrowser {
-    if (null === this._logger) {
-      this._logger = LoggerBrowser.build(`NullLogger`)
-      this._logger.setConfig({
-        [LoggerType.desktop]: false,
-        [LoggerType.log]: false,
-        [LoggerType.info]: false,
-        [LoggerType.warn]: false,
-        [LoggerType.error]: true,
-        [LoggerType.trace]: false
-      })
-    }
-
+  getLogger(): LoggerInterface {
     return this._logger
   }
 
@@ -127,12 +112,12 @@ export class B24HelperManager {
 
         return acc
       },
-      {} as Record<string, { method: string }>
+      {} as BatchNamedCommandsUniversal
     )
 
     try {
-      const response = await this._b24.callBatch(batchRequest)
-      const data = response.getData()
+      const response = await this._b24.callBatch(batchRequest) as Result<Record<string, any>>
+      const data = response.getData()!
 
       if (data[`get_${LoadDataType.App}`]) {
         this._app = await this.parseAppData(data[`get_${LoadDataType.App}`])
@@ -180,7 +165,7 @@ export class B24HelperManager {
         throw error
       }
 
-      console.error('Error loading data:', error)
+      this.getLogger().error('Failed to load data', { error })
       throw new Error('Failed to load data')
     }
   }
@@ -299,7 +284,7 @@ export class B24HelperManager {
   }
 
   /**
-   * Get the account address BX24 (https://name.bitrix24.com)
+   * Get the account address BX24 (https://your_domain.bitrix24.com)
    */
   get hostName(): string {
     return this._b24.getTargetOrigin()
@@ -469,7 +454,7 @@ export class B24HelperManager {
     }
 
     this._b24PullClient.start().catch((error) => {
-      this.getLogger().error(`${Text.getDateForLog()}: Pull not running`, error)
+      this.getLogger().error(`${Text.getDateForLog()}: Pull not running`, { error })
     })
   }
 

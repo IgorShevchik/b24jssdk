@@ -1,5 +1,6 @@
-import { B24LangList } from '../core/language/list'
 import type { B24FrameQueryParams, MessageInitData } from '../types/auth'
+import { B24LangList } from '../core/language/list'
+import { ApiVersion } from '../types/b24'
 
 /**
  * Application Frame Data Manager
@@ -10,8 +11,13 @@ export class AppFrame {
   #appSid: null | string = null
   #path: null | string = null
   #lang: null | string = null
+  #b24TargetRest: string
+  #b24Target: string
+  readonly #b24TargetRestWithPath: Map<ApiVersion, string>
 
-  constructor(queryParams: B24FrameQueryParams) {
+  constructor(
+    queryParams: B24FrameQueryParams
+  ) {
     if (queryParams.DOMAIN) {
       this.#domain = queryParams.DOMAIN
       this.#domain = this.#domain.replace(/:(80|443)$/, '')
@@ -26,6 +32,15 @@ export class AppFrame {
     if (queryParams.APP_SID) {
       this.#appSid = queryParams.APP_SID
     }
+
+    this.#b24TargetRestWithPath = new Map()
+
+    this.#b24Target = `${this.#protocol ? 'https' : 'http'}://${this.#domain}`
+    this.#b24TargetRest = `${this.#b24Target}/rest`
+
+    this.#b24TargetRestWithPath.set(ApiVersion.v1, `${this.#b24TargetRest}`)
+    this.#b24TargetRestWithPath.set(ApiVersion.v2, `${this.#b24TargetRest}`)
+    this.#b24TargetRestWithPath.set(ApiVersion.v3, `${this.#b24TargetRest}/api`)
   }
 
   /**
@@ -48,6 +63,13 @@ export class AppFrame {
     this.#protocol = Number.parseInt(data.PROTOCOL) === 1
     this.#domain = this.#domain.replace(/:(80|443)$/, '')
 
+    this.#b24Target = `${this.#protocol ? 'https' : 'http'}://${this.#domain}`
+    this.#b24TargetRest = `${this.#b24Target}/rest`
+
+    this.#b24TargetRestWithPath.set(ApiVersion.v1, `${this.#b24TargetRest}`)
+    this.#b24TargetRestWithPath.set(ApiVersion.v2, `${this.#b24TargetRest}`)
+    this.#b24TargetRestWithPath.set(ApiVersion.v3, `${this.#b24TargetRest}/api`)
+
     return this
   }
 
@@ -63,24 +85,27 @@ export class AppFrame {
   }
 
   /**
-   * Get the account address BX24 (https://name.bitrix24.com)
+   * Get the account address BX24 (https://your_domain.bitrix24.com)
    */
   getTargetOrigin(): string {
-    return `${this.#protocol ? 'https' : 'http'}://${this.#domain}`
+    return this.#b24Target
   }
 
   /**
-   * Get the account address BX24 with Path (https://name.bitrix24.com/rest)
+   * Get the account address BX24 with path
+   *   - ver1 `https://your_domain.bitrix24.com/rest/`
+   *   - ver2 `https://your_domain.bitrix24.com/rest/`
+   *   - ver3` https://your_domain.bitrix24.com/rest/api/`
    */
-  getTargetOriginWithPath(): string {
-    return this.getTargetOrigin() + (this.#path ?? '')
+  getTargetOriginWithPath(): Map<ApiVersion, string> {
+    return this.#b24TargetRestWithPath
   }
 
   /**
    * Returns the localization of the B24 interface
-   * @return {B24LangList} - default B24LangList.en
+   * @return {B24LangList} - default `B24LangList.en`
    *
-   * @link https://apidocs.bitrix24.com/api-reference/bx24-js-sdk/additional-functions/bx24-get-lang.html
+   * @link https://apidocs.bitrix24.com/sdk/bx24-js-sdk/additional-functions/bx24-get-lang.html
    */
   getLang(): B24LangList {
     return (this.#lang as B24LangList) || B24LangList.en

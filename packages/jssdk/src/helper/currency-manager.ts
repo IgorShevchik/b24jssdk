@@ -1,8 +1,8 @@
-import { AbstractHelper, UnhandledMatchError } from './abstract-helper'
 import type { BoolString, ISODate, NumberString } from '../types/common'
 import type { Currency, CurrencyFormat } from '../types/b24-helper'
-import Type from '../tools/type'
-import Text from '../tools/text'
+import { AbstractHelper, UnhandledMatchError } from './abstract-helper'
+import { Type } from '../tools/type'
+import { Text } from '../tools/text'
 
 type CurrencyFormatInit = {
   DECIMALS: NumberString
@@ -60,7 +60,7 @@ export class CurrencyManager extends AbstractHelper {
         throw error
       }
 
-      console.error(error)
+      this.getLogger().error('Failed to load data', { error })
       throw new Error('Failed to load data')
     }
   }
@@ -134,7 +134,7 @@ export class CurrencyManager extends AbstractHelper {
         }
       })
     } catch (error) {
-      console.error(error)
+      this.getLogger().error('Failed to load data', { error })
     }
   }
 

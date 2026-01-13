@@ -1,12 +1,12 @@
 import type { IRequestIdGenerator } from '../../types/http'
-import Text from '../../tools/text'
+import { Text } from '../../tools/text'
 
 const DEFAULT_REQUEST_ID_HEADER_FIELD_NAME = 'X-Request-ID'
 const DEFAULT_QUERY_STRING_PARAMETER_NAME = 'bx24_request_id'
 const DEFAULT_QUERY_STRING_SDK_VER_PARAMETER_NAME = 'bx24_sdk_ver'
 const DEFAULT_QUERY_STRING_SDK_TYPE_PARAMETER_NAME = 'bx24_sdk_type'
 
-export default class DefaultRequestIdGenerator implements IRequestIdGenerator {
+export class RequestIdGenerator implements IRequestIdGenerator {
   public getQueryStringParameterName(): string {
     return DEFAULT_QUERY_STRING_PARAMETER_NAME
   }

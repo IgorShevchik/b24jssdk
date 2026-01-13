@@ -1,8 +1,8 @@
-import Type from '../tools/type'
-import Text from '../tools/text'
+import type { ConnectorConfig } from '../types/pull'
+import { Type } from '../tools/type'
+import { Text } from '../tools/text'
 import { AbstractConnector } from './abstract-connector'
 import { ConnectionType } from '../types/pull'
-import type { ConnectorConfig } from '../types/pull'
 
 const LONG_POLLING_TIMEOUT = 60
 
@@ -105,9 +105,7 @@ export class LongPollingConnector extends AbstractConnector {
   override send(buffer: ArrayBuffer | string): boolean {
     const path = this._parent.getPublicationPath()
     if (!path) {
-      this.getLogger().error(
-        new Error(`${Text.getDateForLog()}: Pull: publication path is empty`)
-      )
+      this.getLogger().error(`${Text.getDateForLog()}: Pull: publication path is empty`)
       return false
     }
 

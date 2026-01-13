@@ -1,15 +1,19 @@
-import Type from '../../tools/type'
-import Text from '../../tools/text'
+import { Type } from '../../tools/type'
+import { Text } from '../../tools/text'
 import { Result, type IResult } from '../result'
 import { AjaxError } from './ajax-error'
 import type { NumberString } from '../../types/common'
 import type { Payload, PayloadTime } from '../../types/payloads'
-import type { TypeHttp } from '../../types/http'
+import type { TypeCallParams, TypeHttp } from '../../types/http'
 
+/**
+ * @todo clear
+ * @todo docs
+ */
 export type AjaxQuery = Readonly<{
   method: string
-  params: Readonly<object>
-  start: number
+  params: TypeCallParams
+  requestId: string
 }>
 
 export type AjaxResultParams<T = unknown> = Readonly<{
@@ -27,6 +31,10 @@ type AjaxResultOptions<T> = Readonly<{
   status: number
 }>
 
+type ErrorData = {
+  code: string
+  description: string
+}
 /**
  * Result of request to Rest Api
  */
@@ -45,34 +53,47 @@ export class AjaxResult<T = unknown> extends Result<Payload<T>> implements IResu
     this.#processErrors()
   }
 
+  /**
+   * If the response contains error data, we'll restore it to an error.
+   *
+   * @todo ! For version 3, do everything separately.
+   */
   #processErrors(): void {
-    const { error } = this._data
+    const { error, error_description } = this._data
     if (!error) return
 
-    const errorParams = this.#normalizeError(error)
+    let errorData: ErrorData = {
+      code: '',
+      description: ''
+    }
+    if (typeof error === 'string') {
+      errorData.code = error
+      errorData.description = error_description || ''
+    } else {
+      errorData = {
+        code: error.error,
+        description: error.error_description || ''
+      }
+    }
+
+    const errorParams = this.#normalizeError(errorData)
     this.addError(this.#createAjaxError(errorParams), 'base-error')
   }
 
-  #normalizeError(error: string | { error: string, error_description?: string }): {
-    code: string
-    description: string
-  } {
-    return typeof error === 'string'
-      ? { code: error, description: this._data.error_description || '' }
-      : { code: error.error, description: error.error_description || '' }
+  #normalizeError(error: ErrorData): ErrorData {
+    return { code: error.code, description: error.description }
   }
 
-  #createAjaxError(params: { code: string, description: string }): AjaxError {
+  #createAjaxError(errorData: ErrorData): AjaxError {
     return new AjaxError({
       code: String(this._status),
-      description: params.description,
+      description: errorData.description,
       status: this._status,
       requestInfo: {
         method: this._query.method,
-        // url: '?',
-        params: this._query.params
+        params: this._query.params,
+        requestId: this._query.requestId
       }
-      // request:
     })
   }
 
@@ -127,16 +148,15 @@ export class AjaxResult<T = unknown> extends Result<Payload<T>> implements IResu
     const nextPageQuery = this.#buildNextPageQuery()
     return http.call(
       nextPageQuery.method,
-      nextPageQuery.params,
-      nextPageQuery.start
+      nextPageQuery.params
     ) as Promise<AjaxResult<T>>
   }
 
   #buildNextPageQuery(): AjaxQuery {
-    return {
-      ...this._query,
-      start: Text.toInteger(this._data.next)
-    }
+    const result = { ...this._query }
+    result.params.start = Text.toInteger(this._data.next)
+
+    return result
   }
 
   // Immutable API

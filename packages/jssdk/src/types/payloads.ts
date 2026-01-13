@@ -1,10 +1,20 @@
+import type { ISODate } from './common'
+
 export type PayloadTime = {
   readonly start: number
   readonly finish: number
   readonly duration: number
   readonly processing: number
-  readonly date_start: string
-  readonly date_finish: string
+  readonly date_start: ISODate
+  readonly date_finish: ISODate
+  /**
+   * timestamp - when part of the limit for this method will be released.
+   */
+  readonly operating_reset_at: number
+  /**
+   * indicates the execution time of a request to a specific method.
+   */
+  readonly operating: number
 }
 
 export type GetPayload<P> = {
@@ -20,24 +30,26 @@ export type ListPayload<P> = {
   readonly time: PayloadTime
 }
 
+export type BatchPayloadResult<C> = {
+  readonly result:
+    | { readonly [P in keyof C]?: C[P] }
+    | ReadonlyArray<C[keyof C]>
+  readonly result_error:
+    | { readonly [P in keyof C]?: string }
+    | readonly string[]
+  readonly result_total:
+    | { readonly [P in keyof C]?: number }
+    | readonly number[]
+  readonly result_next:
+    | { readonly [P in keyof C]?: number }
+    | readonly number[]
+  readonly result_time:
+    | { readonly [P in keyof C]?: PayloadTime }
+    | readonly PayloadTime[]
+}
+
 export type BatchPayload<C> = {
-  readonly result: {
-    readonly result:
-      | { readonly [P in keyof C]?: C[P] }
-      | ReadonlyArray<C[keyof C]>
-    readonly result_error:
-      | { readonly [P in keyof C]?: string }
-      | readonly string[]
-    readonly result_total:
-      | { readonly [P in keyof C]?: number }
-      | readonly number[]
-    readonly result_next:
-      | { readonly [P in keyof C]?: number }
-      | readonly number[]
-    readonly result_time:
-      | { readonly [P in keyof C]?: PayloadTime }
-      | readonly PayloadTime[]
-  }
+  readonly result: BatchPayloadResult<C>
   readonly time: PayloadTime
 }
 

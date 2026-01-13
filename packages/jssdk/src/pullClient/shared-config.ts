@@ -1,21 +1,19 @@
-import { LoggerBrowser, LoggerType } from '../logger/browser'
-import Type from '../tools/type'
-import Text from '../tools/text'
+import type { SharedConfigCallbacks, SharedConfigParams, TypeStorageManager } from '../types/pull'
+import type { LoggerInterface } from '../logger'
+import { LoggerFactory } from '../logger'
+import { Type } from '../tools/type'
+import { Text } from '../tools/text'
 import { StorageManager } from './storage-manager'
-import {
-  LsKeys,
-  type SharedConfigCallbacks,
-  type SharedConfigParams,
-  type TypeStorageManager
-} from '../types/pull'
+import { LsKeys } from '../types/pull'
 
 export class SharedConfig {
-  private _logger: null | LoggerBrowser = null
+  private _logger: LoggerInterface
   private readonly _storage: TypeStorageManager
   private _ttl: number = 24 * 60 * 60
   private _callbacks: SharedConfigCallbacks
 
   constructor(params: SharedConfigParams = {}) {
+    this._logger = LoggerFactory.createNullLogger()
     params = params || {}
     this._storage = params.storage || new StorageManager()
 
@@ -30,24 +28,11 @@ export class SharedConfig {
     }
   }
 
-  setLogger(logger: LoggerBrowser): void {
+  setLogger(logger: LoggerInterface): void {
     this._logger = logger
   }
 
-  getLogger(): LoggerBrowser {
-    if (null === this._logger) {
-      this._logger = LoggerBrowser.build(`NullLogger`)
-
-      this._logger.setConfig({
-        [LoggerType.desktop]: false,
-        [LoggerType.log]: false,
-        [LoggerType.info]: false,
-        [LoggerType.warn]: false,
-        [LoggerType.error]: true,
-        [LoggerType.trace]: false
-      })
-    }
-
+  getLogger(): LoggerInterface {
     return this._logger
   }
 
@@ -85,10 +70,8 @@ export class SharedConfig {
       )
     } catch (error) {
       this.getLogger().error(
-        new Error(
-          `${Text.getDateForLog()}: Pull: Could not save WS_blocked flag in local storage. Error: `
-        ),
-        error
+        `${Text.getDateForLog()}: Pull: Could not save WS_blocked flag in local storage`,
+        { error }
       )
 
       return false
@@ -117,10 +100,8 @@ export class SharedConfig {
       )
     } catch (error) {
       this.getLogger().error(
-        new Error(
-          `${Text.getDateForLog()}: Pull: Could not save LP_blocked flag in local storage. Error: `
-        ),
-        error
+        `${Text.getDateForLog()}: Pull: Could not save LP_blocked flag in local storage.`,
+        { error }
       )
 
       return false
@@ -149,8 +130,8 @@ export class SharedConfig {
       )
     } catch (error) {
       this.getLogger().error(
-        new Error(`${Text.getDateForLog()}: LocalStorage error: `),
-        error
+        `${Text.getDateForLog()}: LocalStorage error.`,
+        { error }
       )
 
       return false

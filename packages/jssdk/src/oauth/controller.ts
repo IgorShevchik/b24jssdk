@@ -1,58 +1,73 @@
+import type { AuthActions, B24OAuthParams, B24OAuthSecret, CallbackRefreshAuth, CustomRefreshAuth } from '../types/auth'
+import type { RestrictionParams } from '../types/limiters'
+import type { TypeB24, ApiVersion } from '../types/b24'
+import { AbstractB24 } from '../core/abstract-b24'
+import { HttpV1 } from '../core/http/controller-v1'
+import { HttpV2 } from '../core/http/controller-v2'
+import { HttpV3 } from '../core/http/controller-v3'
+import { AuthOAuthManager } from './auth'
+import { versionManager } from '../core/http/version-manager'
+
 /**
  * B24.OAuth Manager
- * @todo add docs
  *
- * @link https://apidocs.bitrix24.com/api-reference/oauth/index.html
+ * @link https://apidocs.bitrix24.com/settings/oauth/index.html
+ * @link https://bitrix24.github.io/b24jssdk/docs/oauth/
+ *
+ * @todo add docs
  */
-import type { LoggerBrowser } from '../logger/browser'
-import { AbstractB24 } from '../core/abstract-b24'
-import type { TypeB24 } from '../types/b24'
-import Http from '../core/http/controller'
-import { AuthOAuthManager } from './auth'
-import type { AuthActions, B24OAuthParams, B24OAuthSecret, CallbackRefreshAuth, CustomRefreshAuth } from '../types/auth'
-
 export class B24OAuth extends AbstractB24 implements TypeB24 {
   readonly #authOAuthManager: AuthOAuthManager
 
   // region Init ////
   constructor(
     authOptions: B24OAuthParams,
-    oAuthSecret: B24OAuthSecret
+    oAuthSecret: B24OAuthSecret,
+    options?: {
+      restrictionParams?: Partial<RestrictionParams>
+    }
   ) {
     super()
 
-    this.#authOAuthManager = new AuthOAuthManager(authOptions, oAuthSecret)
+    this.#authOAuthManager = new AuthOAuthManager(
+      authOptions,
+      oAuthSecret
+    )
 
-    this._http = new Http(
-      this.#authOAuthManager.getTargetOriginWithPath(),
-      this.#authOAuthManager,
-      this._getHttpOptions()
-    )
-    this._http.setClientSideWarning(
-      true,
-      'It is not safe to use oauth requests on the client side'
-    )
+    const warningText = 'The B24OAuth object is intended exclusively for use on the server.\nA webhook contains a secret access key, which MUST NOT be used in client-side code (browser, mobile app).'
+
+    this._httpV1 = new HttpV1(this.#authOAuthManager, this._getHttpOptions(), options?.restrictionParams)
+    this._httpV1.setClientSideWarning(true, warningText)
+    this._httpV2 = new HttpV2(this.#authOAuthManager, this._getHttpOptions(), options?.restrictionParams)
+    this._httpV2.setClientSideWarning(true, warningText)
+    this._httpV3 = new HttpV3(this.#authOAuthManager, this._getHttpOptions(), options?.restrictionParams)
+    this._httpV3.setClientSideWarning(true, warningText)
 
     this._isInit = true
   }
 
-  public override setLogger(logger: LoggerBrowser): void {
-    super.setLogger(logger)
-  }
-
   /**
    * Used to initialize information about the current user.
+   *
+   * @todo test this
    */
-  public async initIsAdmin(): Promise<void> {
+  public async initIsAdmin(requestId?: string): Promise<void> {
+    const method = 'profile'
+
     this._ensureInitialized()
-    return this.#authOAuthManager.initIsAdmin(this._http!)
+
+    const version = this.getAllApiVersions().find(version => versionManager.isSupport(version, method))
+
+    if (!version) return
+    const client = this.getHttpClient(version)
+    return this.#authOAuthManager.initIsAdmin(client, requestId)
   }
 
   /**
    * Sets an asynchronous Callback to receive updated authorization data
    * @param cb
    */
-  setCallbackRefreshAuth(cb: CallbackRefreshAuth): void {
+  public setCallbackRefreshAuth(cb: CallbackRefreshAuth): void {
     this._ensureInitialized()
     this.#authOAuthManager.setCallbackRefreshAuth(cb)
   }
@@ -60,7 +75,7 @@ export class B24OAuth extends AbstractB24 implements TypeB24 {
   /**
    * Removes Callback to receive updated authorization data
    */
-  removeCallbackRefreshAuth(): void {
+  public removeCallbackRefreshAuth(): void {
     this._ensureInitialized()
     this.#authOAuthManager.removeCallbackRefreshAuth()
   }
@@ -69,7 +84,7 @@ export class B24OAuth extends AbstractB24 implements TypeB24 {
    * Sets an asynchronous function for custom get new refresh token
    * @param cb
    */
-  setCustomRefreshAuth(cb: CustomRefreshAuth): void {
+  public setCustomRefreshAuth(cb: CustomRefreshAuth): void {
     this._ensureInitialized()
     this.#authOAuthManager.setCustomRefreshAuth(cb)
   }
@@ -77,7 +92,7 @@ export class B24OAuth extends AbstractB24 implements TypeB24 {
   /**
    * Removes function for custom get new refresh token
    */
-  removeCustomRefreshAuth(): void {
+  public removeCustomRefreshAuth(): void {
     this._ensureInitialized()
     this.#authOAuthManager.removeCustomRefreshAuth()
   }
@@ -88,7 +103,9 @@ export class B24OAuth extends AbstractB24 implements TypeB24 {
    * Disables warning about client-side query execution
    */
   public offClientSideWarning(): void {
-    this.getHttpClient().setClientSideWarning(false, '')
+    this.getAllApiVersions().forEach((version) => {
+      this.getHttpClient(version).setClientSideWarning(false, '')
+    })
   }
   // endregion ////
 
@@ -98,17 +115,17 @@ export class B24OAuth extends AbstractB24 implements TypeB24 {
 
   // region Get ////
   /**
-   * Get the account address BX24 ( https://name.bitrix24.com )
+   * @inheritDoc
    */
-  override getTargetOrigin(): string {
+  public override getTargetOrigin(): string {
     this._ensureInitialized()
     return this.#authOAuthManager.getTargetOrigin()
   }
 
   /**
-   * Get the account address BX24 with Path ( https://name.bitrix24.com/rest/1/xxxxx )
+   * @inheritDoc
    */
-  override getTargetOriginWithPath(): string {
+  public override getTargetOriginWithPath(): Map<ApiVersion, string> {
     this._ensureInitialized()
     return this.#authOAuthManager.getTargetOriginWithPath()
   }

@@ -1,41 +1,46 @@
-import type { LoggerBrowser } from '../logger/browser'
-import { AbstractB24 } from '../core/abstract-b24'
-import type { TypeB24 } from '../types/b24'
-import Http from '../core/http/controller'
-import { AuthHookManager } from './auth'
 import type { AuthActions, B24HookParams } from '../types/auth'
+import type { RestrictionParams } from '../types/limiters'
+import type { TypeB24, ApiVersion } from '../types/b24'
+import { AbstractB24 } from '../core/abstract-b24'
+import { HttpV1 } from '../core/http/controller-v1'
+import { HttpV2 } from '../core/http/controller-v2'
+import { HttpV3 } from '../core/http/controller-v3'
+import { AuthHookManager } from './auth'
 
 /**
  * B24.Hook Manager.
  *
- * @link https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=99&LESSON_ID=8581&LESSON_PATH=8771.8583.8581
+ * @link https://bitrix24.github.io/b24jssdk/docs/hook/
+ *
+ * @todo docs
  */
 export class B24Hook extends AbstractB24 implements TypeB24 {
   readonly #authHookManager: AuthHookManager
 
   // region Init ////
-  constructor(b24HookParams: B24HookParams) {
+  constructor(
+    b24HookParams: B24HookParams,
+    options?: {
+      restrictionParams?: Partial<RestrictionParams>
+    }
+  ) {
     super()
 
-    this.#authHookManager = new AuthHookManager(b24HookParams)
+    this.#authHookManager = new AuthHookManager(
+      b24HookParams
+    )
 
-    this._http = new Http(
-      this.#authHookManager.getTargetOriginWithPath(),
-      this.#authHookManager,
-      this._getHttpOptions()
-    )
-    this._http.setClientSideWarning(
-      true,
-      'It is not safe to use hook requests on the client side'
-    )
+    const warningText = 'The B24Hook object is intended exclusively for use on the server.\nA webhook contains a secret access key, which MUST NOT be used in client-side code (browser, mobile app).'
+
+    this._httpV1 = new HttpV1(this.#authHookManager, this._getHttpOptions(), options?.restrictionParams)
+    this._httpV1.setClientSideWarning(true, warningText)
+    this._httpV2 = new HttpV2(this.#authHookManager, this._getHttpOptions(), options?.restrictionParams)
+    this._httpV2.setClientSideWarning(true, warningText)
+    this._httpV3 = new HttpV3(this.#authHookManager, this._getHttpOptions(), options?.restrictionParams)
+    this._httpV3.setClientSideWarning(true, warningText)
 
     this._isInit = true
   }
-
-  public override setLogger(logger: LoggerBrowser): void {
-    super.setLogger(logger)
-  }
-
   // endregion ////
 
   override get auth(): AuthActions {
@@ -47,24 +52,26 @@ export class B24Hook extends AbstractB24 implements TypeB24 {
    * Disables warning about client-side query execution
    */
   public offClientSideWarning(): void {
-    this.getHttpClient().setClientSideWarning(false, '')
+    this.getAllApiVersions().forEach((version) => {
+      this.getHttpClient(version).setClientSideWarning(false, '')
+    })
   }
 
   // endregion ////
 
   // region Get ////
   /**
-   * Get the account address BX24 ( https://name.bitrix24.com )
+   * @inheritDoc
    */
-  override getTargetOrigin(): string {
+  public override getTargetOrigin(): string {
     this._ensureInitialized()
     return this.#authHookManager.getTargetOrigin()
   }
 
   /**
-   * Get the account address BX24 with Path ( https://name.bitrix24.com/rest/1/xxxxx )
+   * @inheritDoc
    */
-  override getTargetOriginWithPath(): string {
+  public override getTargetOriginWithPath(): Map<ApiVersion, string> {
     this._ensureInitialized()
     return this.#authHookManager.getTargetOriginWithPath()
   }
@@ -72,7 +79,18 @@ export class B24Hook extends AbstractB24 implements TypeB24 {
   // endregion ////
 
   // region Tools ////
-  public static fromWebhookUrl(url: string): B24Hook {
+  /**
+   * Init Webhook from url
+   *   - ver1 `https://your_domain.bitrix24.com/rest/{id}/{webhook}`
+   *   - ver2 `https://your_domain.bitrix24.com/rest/{id}/{webhook}`
+   *   - ver3 `https://your_domain.bitrix24.com/rest/api/{id}/{webhook}`
+   *
+   * @todo docs
+   */
+  public static fromWebhookUrl(
+    url: string,
+    options?: { restrictionParams?: Partial<RestrictionParams> }
+  ): B24Hook {
     if (!url.trim()) {
       throw new Error('Webhook URL cannot be empty')
     }
@@ -80,7 +98,7 @@ export class B24Hook extends AbstractB24 implements TypeB24 {
     let parsedUrl: URL
 
     try {
-      parsedUrl = new URL(url)
+      parsedUrl = new URL(url.replace('/rest/api', '/rest'))
     } catch {
       throw new Error(`Invalid webhook URL format: ${url}`)
     }
@@ -90,23 +108,37 @@ export class B24Hook extends AbstractB24 implements TypeB24 {
     }
 
     const pathParts = parsedUrl.pathname.split('/').filter(Boolean)
-    if (pathParts.length < 3 || pathParts[0] !== 'rest') {
-      throw new Error('Webhook URL must follow format: /rest/<userId>/<secret>')
+    const isValidFormat = (
+      // Format: /rest/{id}/{webhook}
+      (pathParts.length === 3 && pathParts[0] === 'rest')
+      // Format: /rest/api/{id}/{webhook}
+      || (pathParts.length === 4 && pathParts[0] === 'rest' && pathParts[1] === 'api')
+    )
+
+    if (!isValidFormat) {
+      throw new Error('Webhook URL must follow format: /rest/<userId>/<secret> or /rest/api/<userId>/<secret>')
     }
 
-    const userIdStr = pathParts[1]
-    const secret = pathParts[2]
+    // Determine the position of userId and secret depending on the format
+    const userIdIndex = pathParts[1] === 'api' ? 2 : 1
+    const secretIndex = pathParts[1] === 'api' ? 3 : 2
+
+    const userIdStr = pathParts[userIdIndex]
+    const secret = pathParts[secretIndex]
 
     if (!/^\d+$/.test(userIdStr)) {
       throw new Error(`User ID must be numeric in webhook URL, received: ${userIdStr}`)
     }
     const userId = Number.parseInt(userIdStr, 10)
 
-    return new B24Hook({
-      b24Url: parsedUrl.origin,
-      userId,
-      secret
-    })
+    return new B24Hook(
+      {
+        b24Url: parsedUrl.origin,
+        userId,
+        secret
+      },
+      options
+    )
   }
   // endregion ////
 }
